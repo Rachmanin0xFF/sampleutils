@@ -8,6 +8,7 @@ public final class PixelMath {
 
 	static final float PI = 3.14159265359f;
 	static final float TWO_PI = 6.28318530718f;
+	static final float PHI = 1.61803398875f;
 	
 	public static float lanczos(float x, float a) {
 	  if(x < -a || x > a) return 0;
@@ -46,6 +47,23 @@ public final class PixelMath {
 		return (int)(x + 0.5);
 	}
 	
+	// modified sunflower function
+	// https://stackoverflow.com/a/28572551
+	public static Vecf[] sunflower(int n) {
+	  return sunflower(n, 0.75f);
+	}
+	// higher alpha = more constant edge, default is 0.75
+	public static Vecf[] sunflower(int n, float alpha) {
+	  Vecf[] o = new Vecf[n];
+	  int b = round(alpha*(float)Math.sqrt(n));
+	  for(int i = 0; i < n; i++) {
+	    float r = 1.0f;
+	    if(i < n-b) r = (float)(Math.sqrt((float)i - 0.5)/Math.sqrt(n - (b+1.0)*0.5));
+	    float theta = 2.0f*PI*(float)i/(PHI*PHI);
+	    o[i] = new Vecf(r*(float)Math.cos(theta), r*(float)Math.sin(theta));
+	  }
+	  return o;
+	}
 	
 	// r - grid radius, k - sample attempts (default 20)
 	// returns a disc

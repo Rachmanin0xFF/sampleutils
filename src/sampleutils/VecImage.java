@@ -50,6 +50,18 @@ public class VecImage implements PConstants {
 		}
 	}
 	
+	public VecImage(PImage p) {
+		pixels = new Vecf[p.width][p.height];
+		for(int x = 0; x < p.width; x++) for(int y = 0; y < p.height; y++) {
+			int c = p.get(x, y);
+			pixels[x][y] = new Vecf(r(c), g(c), b(c), a(c));
+		}
+	}
+	
+	int a(int c) {return (c >> 24) & 255; }
+	int r(int c) {return (c >> 16) & 255; }
+	int g(int c) {return (c >> 8) & 255;}
+	int b(int c) {return c & 255; }
 	
 	private void welcome() {
 		System.out.println("##library.name## ##library.prettyVersion## by ##author##");

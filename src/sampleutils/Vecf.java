@@ -12,7 +12,7 @@ public class Vecf {
 	 * RANT TIME:
 	 * Deciding to avoid templates was kind of tricky. There's not really a good solution
 	 * that doesn't feel bloated in this version of the JDK. I could abstract away numbers, which is a mess,
-	 * or convert cast everything and use .getDoubleValue(), which feels gross / slow.
+	 * (JScience does this), or convert cast everything and use .getDoubleValue().
 	 * 
 	 * The most robust solution would be to come up with a general way of talking about precision that tracks bit depths and all that,
 	 * but if I'm going that far, I'd rather just use C++ or something.
