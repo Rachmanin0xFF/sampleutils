@@ -139,6 +139,21 @@ public class Vecf {
 	}
 
 	// Functions of one vector
+	public static Vecf onesLike(Vecf a) {
+		Vecf positive = new Vecf(a.dimension());
+		for (int i = 0; i < a.dimension(); i++) {
+			positive.components[i] = 1.f;
+		}
+		return positive;
+	}
+	public static Vecf zeroesLike(Vecf a) {
+		Vecf positive = new Vecf(a.dimension());
+		for (int i = 0; i < a.dimension(); i++) {
+			positive.components[i] = 0.f;
+		}
+		return positive;
+	}
+	
 	public static Vecf abs(Vecf a) {
 		Vecf positive = new Vecf(a.dimension());
 		for (int i = 0; i < a.dimension(); i++) {
@@ -154,7 +169,31 @@ public class Vecf {
 		}
 		return prod;
 	}
-
+	
+	public static Vecf round(Vecf a) {
+		Vecf rounded = new Vecf(a.dimension());
+		for (int i = 0; i < a.dimension(); i++) {
+			rounded.components[i] = Math.round(a.components[i]);
+		}
+		return rounded;
+	}
+	
+	public static Vecf floor(Vecf a) {
+		Vecf floored = new Vecf(a.dimension());
+		for (int i = 0; i < a.dimension(); i++) {
+			floored.components[i] = (long) Math.floor(a.components[i]);
+		}
+		return floored;
+	}
+	
+	public static Vecf ceil(Vecf a) {
+		Vecf ceiled = new Vecf(a.dimension());
+		for (int i = 0; i < a.dimension(); i++) {
+			ceiled.components[i] = (long) Math.ceil(a.components[i]);
+		}
+		return ceiled;
+	}
+	
 	public static float magnitudeSquared(Vecf a) {
 		float magSquared = 0.f;
 		for (int i = 0; i < a.components.length; i++) {
@@ -166,5 +205,5 @@ public class Vecf {
 	public static float magnitude(Vecf a) {
 		return (float) Math.sqrt(magnitudeSquared(a));
 	}
-
+	
 }

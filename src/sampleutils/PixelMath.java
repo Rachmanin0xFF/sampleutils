@@ -9,6 +9,8 @@ public final class PixelMath {
 	static final float PI = 3.14159265359f;
 	static final float TWO_PI = 6.28318530718f;
 	static final float PHI = 1.61803398875f;
+	
+	private PixelMath() {} // static use only
 
 	public static float lanczos(float x, float a) {
 		if (x < -a || x > a)
@@ -33,9 +35,10 @@ public final class PixelMath {
 			return 1;
 		return 6 * x * x * x * x * x - 15 * x * x * x * x + 10 * x * x * x;
 	}
-
+	
+	// this can handle negatives (x>>31 checks if the int is negative)
 	public static int mod(int x, int n) {
-		return ((x >> 31) & (n - 1)) + (x % n);
+		return ((x >> 31) & n) + (x % n);
 	}
 
 	public static int clamp_inclusive(int x, int low, int high) {
@@ -46,7 +49,7 @@ public final class PixelMath {
 		return x;
 	}
 
-	// for internal use -- I don't want this class to rely on Processing's
+	// for internal use -- I'd like this class to be decoupled from Processing's
 	// libraries, so we're rewriting this
 	private static float random(float max) {
 		return random(0, max);
@@ -81,8 +84,8 @@ public final class PixelMath {
 	}
 
 	// r - grid radius, k - sample attempts (default 20)
-	// returns a disc
-	Vecf[] poisson(int r, int k) {
+	// returns an evenly-spaced anisotropic set of points in the disk r < 1 centered at the origin
+	public static Vecf[] poisson(int r, int k) {
 		ArrayList<Vecf> dead = new ArrayList<Vecf>();
 		HashSet<Vecf> active = new HashSet<Vecf>(); // O(1) removal time
 		boolean[][] occupied = new boolean[r * 2 + 1][r * 2 + 1];

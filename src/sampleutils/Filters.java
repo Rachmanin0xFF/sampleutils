@@ -3,6 +3,14 @@ package sampleutils;
 public final class Filters {
 	private Filters() {
 	}
+	
+	public static VecImage invert(VecImage input) {
+		VecImage output = new VecImage(input);
+		for(int x = 0; x < output.width; x++) for(int y = 0; y < output.height; y++) {
+			output.pixels[x][y] = Vecf.sub(Vecf.onesLike(output.pixels[x][y]), input.pixels[x][y]);
+		}
+		return output;
+	}
 
 	public static VecImage mediod(VecImage input, int rad) {
 		VecImage output = new VecImage(input);
