@@ -1,21 +1,76 @@
 package sampleutils;
 
+
+import processing.core.*;
+
+/**
+ * A class to perform basic operations on arbitrary-length floating-point vectors.
+ * Created because PVector can only store 3 components.
+ */
 public class Vecf {
-	float[] components;
+	/*
+	 * RANT TIME:
+	 * Deciding to avoid templates was kind of tricky. There's not really a good solution
+	 * that doesn't feel bloated in this version of the JDK. I could abstract away numbers, which is a mess,
+	 * or convert cast everything and use .getDoubleValue(), which feels gross / slow.
+	 * 
+	 * The most robust solution would be to come up with a general way of talking about precision that tracks bit depths and all that,
+	 * but if I'm going that far, I'd rather just use C++ or something.
+	 * 
+	 * I'm not using doubles because I don't think anyone really needs 64-bit precision in each color channel, except maybe astronomers.
+	 * For reference, most "HDR" textures in computer graphics are only 16 bits per color channel.
+	 * 
+	 * As for generic arrays vs ArrayLists -- I don't think it really matters. I'm using arrays[] because I like the array operator.
+	 * We don't need any of List's nice functions for something this low-level :p
+	 */
+	
+	public float[] components;
 	
 	public Vecf(int dimension) {
 		components = new float[dimension];
 	}
-	public Vecf(float _x, float _y, float _z) {
-		components = new float[] {_x, _y, _z};
+	public Vecf(PVector v) {
+		components = new float[] {v.x, v.y, v.z};
 	}
-	public Vecf(float _x, float _y, float _z, float _w) {
-		components = new float[] {_x, _y, _z, _w};
-	}
-	public static Vecf add(Vecf a, Vecf b) {
-		if(a.components.length != b.components.length) {
-			System.err.println("Error! Trying to add vectors of length " + a.components.length + " " + b.components.length);
+	public Vecf(float... args) {
+		components = new float[args.length];
+		for(int i = 0; i < args.length; i++) {
+			components[i] = args[i];
 		}
+	}
+	
+	public int dimension() {
+        return components.length;
+    }
+	
+	//================== INSTANCE METHODS ==================//
+	/*
+	 * TODO: MOVE OUT OF HERE!!! can't have Processing core imported here
+	 * public PVector toPVector() {
+		switch(components.length) {
+		case 1:
+			return new PVector(components[0], 0);
+		case 2:
+			return new PVector(components[0], components[1]);
+		case 3:
+			return new PVector(components[0], components[1], components[2]);
+		default:
+			System.err.println("Vecf cannot be converted to PVector: must have 1-3 components");
+		}
+		return null;
+	}
+	 */
+	
+	
+	//================== STATIC METHODS ==================//
+	// Functions of two vectors
+	private static void checkDimensions(Vecf a, Vecf b) {
+        if (a.dimension() != b.dimension()) {
+            throw new IllegalArgumentException("Vectors must have the same length: " + a.dimension() + " vs " + b.dimension());
+        }
+    }
+	public static Vecf add(Vecf a, Vecf b) {
+		checkDimensions(a, b);
 		Vecf sum = new Vecf(a.components.length);
 		for(int i = 0; i < a.components.length; i++) {
 			sum.components[i] = a.components[i] + b.components[i];
@@ -23,20 +78,77 @@ public class Vecf {
 		return sum;
 	}
 	public static Vecf sub(Vecf a, Vecf b) {
-		if(a.components.length != b.components.length) {
-			System.err.println("Error! Trying to add vectors of length " + a.components.length + " " + b.components.length);
-		}
-		Vecf sum = new Vecf(a.components.length);
+		checkDimensions(a, b);
+		Vecf diff = new Vecf(a.components.length);
 		for(int i = 0; i < a.components.length; i++) {
-			sum.components[i] = a.components[i] - b.components[i];
+			diff.components[i] = a.components[i] - b.components[i];
 		}
-		return sum;
+		return diff;
 	}
-	public static Vecf mult(Vecf a, float c) {
-		Vecf sum = new Vecf(a.components.length);
+	public static Vecf max(Vecf a, Vecf b) {
+		checkDimensions(a, b);
+		Vecf mx = new Vecf(a.components.length);
 		for(int i = 0; i < a.components.length; i++) {
-			sum.components[i] = a.components[i]*c;
+			mx.components[i] = Math.max(a.components[i], b.components[i]);
 		}
-		return sum;
+		return mx;
 	}
+	public static Vecf min(Vecf a, Vecf b) {
+		checkDimensions(a, b);
+		Vecf mx = new Vecf(a.components.length);
+		for(int i = 0; i < a.components.length; i++) {
+			mx.components[i] = Math.min(a.components[i], b.components[i]);
+		}
+		return mx;
+	}
+	public static float dot(Vecf a, Vecf b) {
+		checkDimensions(a, b);
+		float dotproduct = 0.f;
+		for(int i = 0; i < a.components.length; i++) {
+			dotproduct += a.components[i]*b.components[i];
+		}
+		return dotproduct;
+	}
+	public static Vecf multComponents(Vecf a, Vecf b) {
+		checkDimensions(a, b);
+		Vecf prod = new Vecf(a.components.length);
+		for(int i = 0; i < a.components.length; i++) {
+			prod.components[i] = a.components[i] * b.components[i];
+		}
+		return prod;
+	}
+	public static Vecf divComponents(Vecf a, Vecf b) {
+		checkDimensions(a, b);
+		Vecf prod = new Vecf(a.components.length);
+		for(int i = 0; i < a.components.length; i++) {
+			prod.components[i] = a.components[i] / b.components[i];
+		}
+		return prod;
+	}
+	// Functions of one vector
+	public static Vecf abs(Vecf a) {
+		Vecf positive = new Vecf(a.dimension());
+        for (int i = 0; i < a.dimension(); i++) {
+            positive.components[i] = Math.abs(a.components[i]);
+        }
+		return positive;
+	}
+	public static Vecf mult(Vecf a, float scalar) {
+		Vecf prod = new Vecf(a.dimension());
+        for (int i = 0; i < a.dimension(); i++) {
+            prod.components[i] = a.components[i] * scalar;
+        }
+		return prod;
+	}
+	public static float magnitudeSquared(Vecf a) {
+		float magSquared = 0.f;
+		for(int i = 0; i < a.components.length; i++) {
+			magSquared += a.components[i]*a.components[i];
+		}
+		return magSquared;
+	}
+	public static float magnitude(Vecf a) {
+		return (float) Math.sqrt(magnitudeSquared(a));
+	}
+	
 }
