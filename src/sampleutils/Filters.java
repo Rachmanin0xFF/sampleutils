@@ -46,7 +46,7 @@ public final class Filters {
 		return output;
 	}
 
-	// This function selects the PVector in the input array that best
+	// This function selects the Vecf in the input array that best
 	// represents the dataset as a whole (minimizing absolute error)
 	// This function uses the "trimed" algorithm:
 	// http://proceedings.mlr.press/v54/newling17a/newling17a.pdf
@@ -86,6 +86,37 @@ public final class Filters {
 		}
 
 		return data[min_E_i];
+	}
+	
+	// AdvMAME2x pixel art scaling algorithm
+	// uses
+	public static VecImage EPX2(VecImage input) {
+	  VecImage o = new VecImage(input.width*2, input.height*2, input.channels);
+	  for(int x = 0; x < input.width; x++) {
+	    for(int y = 0; y < input.height; y++) {
+	      Vecf P = input.getPixel(x, y);
+	      Vecf A = input.getPixel(x, y-1);
+	      Vecf B = input.getPixel(x+1, y);
+	      Vecf C = input.getPixel(x-1, y);
+	      Vecf D = input.getPixel(x, y+1);
+	      
+	      Vecf V1 = new Vecf(P);
+	      Vecf V2 = new Vecf(P);
+	      Vecf V3 = new Vecf(P);
+	      Vecf V4 = new Vecf(P);
+	      
+	      if(Vecf.equals(C, A) && !Vecf.equals(C, D) && !Vecf.equals(A, B)) V1 = A;
+	      if(Vecf.equals(A, B) && !Vecf.equals(A, C) && !Vecf.equals(B, D)) V2 = B;
+	      if(Vecf.equals(D, C) && !Vecf.equals(D, B) && !Vecf.equals(C, A)) V3 = C;
+	      if(Vecf.equals(B, D) && !Vecf.equals(B, A) && !Vecf.equals(D, C)) V4 = D;
+	      
+	      o.pixels[x*2][y*2] = V1;
+	      o.pixels[x*2+1][y*2] = V2;
+	      o.pixels[x*2][y*2+1] = V3;
+	      o.pixels[x*2+1][y*2+1] = V4;
+	    }
+	  }
+	  return o;
 	}
 
 }

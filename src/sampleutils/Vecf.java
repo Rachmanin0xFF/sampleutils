@@ -74,6 +74,14 @@ public class Vecf {
 					"Vectors must have the same length: " + a.dimension() + " vs " + b.dimension());
 		}
 	}
+	
+	public static boolean equals(Vecf a, Vecf b) {
+		checkDimensions(a, b);
+		for (int i = 0; i < a.components.length; i++) {
+			if(a.components[i] != b.components[i]) return false;
+		}
+		return true;
+	}
 
 	public static Vecf add(Vecf a, Vecf b) {
 		checkDimensions(a, b);
@@ -206,4 +214,12 @@ public class Vecf {
 		return (float) Math.sqrt(magnitudeSquared(a));
 	}
 	
+	@Override public String toString() {
+		String s = "{ ";
+		for(float f : components) {
+			s += f + " ";
+		}
+		s += "}";
+        return s;
+    }
 }

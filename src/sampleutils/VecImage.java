@@ -6,19 +6,19 @@ import processing.core.*;
  * PVectorImage is
  */
 
-public class VecImage implements PConstants {
-
+public class VecImage {
 	// myParent is a reference to the parent sketch
 	Vecf[][] pixels;
 
 	public final static String VERSION = "##library.prettyVersion##";
 	public int width;
 	public int height;
+	public int channels;
 
 	EdgeModes edgeMode = EdgeModes.CLAMP;
 	FilterModes filterMode = FilterModes.BILINEAR;
 	BCSplineModes BCSplineMode = BCSplineModes.MITCHELL_NETRAVALI;
-	
+
 	public float BC_SPLINE_B = 0.f;
 	public float BC_SPLINE_C = 0.f;
 
@@ -56,6 +56,7 @@ public class VecImage implements PConstants {
 			}
 		this.width = width;
 		this.height = height;
+		this.channels = channels;
 	}
 
 	public VecImage(PImage p) {
@@ -67,15 +68,41 @@ public class VecImage implements PConstants {
 			}
 		this.width = p.width;
 		this.height = p.height;
+		this.channels = 4;
 	}
 
 	// Makes a shallow copy
 	public VecImage(VecImage p) {
 		pixels = new Vecf[p.width][p.height];
+		this.width = p.width;
+		this.height = p.height;
+		this.channels = p.channels;
 		for (int x = 0; x < p.width; x++)
 			for (int y = 0; y < p.height; y++) {
 				pixels[x][y] = new Vecf(p.pixels[x][y]);
 			}
+	}
+
+	public final int color(int r, int g, int b, int alpha) {
+		return ((alpha < 0 ? 0 : (alpha > 255 ? 255 : alpha)) << 24) | ((r < 0 ? 0 : (r > 255 ? 255 : r)) << 16)
+				| ((g < 0 ? 0 : (g > 255 ? 255 : g)) << 8) | ((b < 0 ? 0 : (b > 255 ? 255 : b)));
+	}
+
+	// for use with Processing's PImage
+	public int[] toIntegerPixels() {
+		int[] output = new int[width * height];
+		for (int x = 0; x < width; x++)
+			for (int y = 0; y < height; y++) {
+				if (channels > 3)
+					output[x + y * width] = color((int) (pixels[x][y].components[0] * 255.f),
+							(int) (pixels[x][y].components[1] * 255.f), (int) (pixels[x][y].components[2] * 255.f),
+							(int) (pixels[x][y].components[3] * 255.f));
+				else if (channels == 3)
+					output[x + y * width] = color((int) (pixels[x][y].components[0] * 255.f),
+							(int) (pixels[x][y].components[1] * 255.f), (int) (pixels[x][y].components[2] * 255.f),
+							255);
+			}
+		return output;
 	}
 
 	public Vecf getPixel(int x, int y) {
@@ -140,18 +167,18 @@ public class VecImage implements PConstants {
 
 	Vecf sampleBC(float x, float y, float B, float C) {
 		Vecf p0, p1, p2, p3;
-		float d = x - (int)Math.floor(x);
+		float d = x - (int) Math.floor(x);
 
 		if (d == 0.0) {
-			p0 = sampleBCY((int)Math.floor(x) - 1, y, B, C);
-			p1 = sampleBCY((int)Math.floor(x), y, B, C);
-			p2 = sampleBCY((int)Math.floor(x) + 1, y, B, C);
-			p3 = sampleBCY((int)Math.floor(x) + 2, y, B, C);
+			p0 = sampleBCY((int) Math.floor(x) - 1, y, B, C);
+			p1 = sampleBCY((int) Math.floor(x), y, B, C);
+			p2 = sampleBCY((int) Math.floor(x) + 1, y, B, C);
+			p3 = sampleBCY((int) Math.floor(x) + 2, y, B, C);
 		} else {
-			p0 = sampleBCY((int)Math.floor(x) - 1, y, B, C);
-			p1 = sampleBCY((int)Math.floor(x), y, B, C);
-			p2 = sampleBCY((int)Math.ceil(x), y, B, C);
-			p3 = sampleBCY((int)Math.ceil(x) + 1, y, B, C);
+			p0 = sampleBCY((int) Math.floor(x) - 1, y, B, C);
+			p1 = sampleBCY((int) Math.floor(x), y, B, C);
+			p2 = sampleBCY((int) Math.ceil(x), y, B, C);
+			p3 = sampleBCY((int) Math.ceil(x) + 1, y, B, C);
 		}
 		return Vecf.add(
 				Vecf.add(
@@ -159,35 +186,30 @@ public class VecImage implements PConstants {
 								Vecf.add(
 										Vecf.add(Vecf.mult(p0, -B / 6.f - C), Vecf.mult(p1,
 												-1.5f * B - C + 2.f)),
-										Vecf.add(Vecf.mult(p2, 1.5f * B + C
-												- 2.f), Vecf.mult(p3,
-														B / 6.f + C))),
+										Vecf.add(Vecf.mult(p2, 1.5f * B + C - 2.f), Vecf.mult(p3, B / 6.f + C))),
 								d * d * d),
 						Vecf.mult(
-								Vecf.add(
-										Vecf.add(Vecf.mult(p0, 0.5f * B + 2.f * C),
-												Vecf.mult(p1, 2.f * B + C - 3.f)),
+								Vecf.add(Vecf.add(Vecf.mult(p0, 0.5f * B + 2.f * C), Vecf.mult(p1, 2.f * B + C - 3.f)),
 										Vecf.add(Vecf.mult(p2, -2.5f * B - 2.f * C + 3.f), Vecf.mult(p3, -C))),
 								d * d)),
-				Vecf.add(Vecf.mult(Vecf.add(Vecf.mult(p0, -0.5f * B - C), Vecf.mult(p2, 0.5f * B + C)), d),
-						Vecf.add(Vecf.mult(p0, B / 6.f),
-								Vecf.add(Vecf.mult(p1, -B / 3.f + 1.f), Vecf.mult(p2, B / 6.f)))));
+				Vecf.add(Vecf.mult(Vecf.add(Vecf.mult(p0, -0.5f * B - C), Vecf.mult(p2, 0.5f * B + C)), d), Vecf
+						.add(Vecf.mult(p0, B / 6.f), Vecf.add(Vecf.mult(p1, -B / 3.f + 1.f), Vecf.mult(p2, B / 6.f)))));
 	}
 
 	Vecf sampleBCY(int x, float y, float B, float C) {
 		Vecf p0, p1, p2, p3;
-		float d = y - (int)Math.floor(y);
+		float d = y - (int) Math.floor(y);
 
 		if (d == 0.0) {
-			p0 = getPixel(x, (int)Math.floor(y) - 1);
-			p1 = getPixel(x, (int)Math.floor(y));
-			p2 = getPixel(x, (int)Math.floor(y) + 1);
-			p3 = getPixel(x, (int)Math.floor(y) + 2);
+			p0 = getPixel(x, (int) Math.floor(y) - 1);
+			p1 = getPixel(x, (int) Math.floor(y));
+			p2 = getPixel(x, (int) Math.floor(y) + 1);
+			p3 = getPixel(x, (int) Math.floor(y) + 2);
 		} else {
-			p0 = getPixel(x, (int)Math.floor(y) - 1);
-			p1 = getPixel(x, (int)Math.floor(y));
-			p2 = getPixel(x, (int)Math.ceil(y));
-			p3 = getPixel(x, (int)Math.ceil(y) + 1);
+			p0 = getPixel(x, (int) Math.floor(y) - 1);
+			p1 = getPixel(x, (int) Math.floor(y));
+			p2 = getPixel(x, (int) Math.ceil(y));
+			p3 = getPixel(x, (int) Math.ceil(y) + 1);
 		}
 		return Vecf.add(
 				Vecf.add(
@@ -195,19 +217,14 @@ public class VecImage implements PConstants {
 								Vecf.add(
 										Vecf.add(Vecf.mult(p0, -B / 6.f - C), Vecf.mult(p1,
 												-1.5f * B - C + 2.f)),
-										Vecf.add(Vecf.mult(p2, 1.5f * B + C
-												- 2.f), Vecf.mult(p3,
-														B / 6.f + C))),
+										Vecf.add(Vecf.mult(p2, 1.5f * B + C - 2.f), Vecf.mult(p3, B / 6.f + C))),
 								d * d * d),
 						Vecf.mult(
-								Vecf.add(
-										Vecf.add(Vecf.mult(p0, 0.5f * B + 2.f * C),
-												Vecf.mult(p1, 2.f * B + C - 3.f)),
+								Vecf.add(Vecf.add(Vecf.mult(p0, 0.5f * B + 2.f * C), Vecf.mult(p1, 2.f * B + C - 3.f)),
 										Vecf.add(Vecf.mult(p2, -2.5f * B - 2.f * C + 3.f), Vecf.mult(p3, -C))),
 								d * d)),
-				Vecf.add(Vecf.mult(Vecf.add(Vecf.mult(p0, -0.5f * B - C), Vecf.mult(p2, 0.5f * B + C)), d),
-						Vecf.add(Vecf.mult(p0, B / 6.f),
-								Vecf.add(Vecf.mult(p1, -B / 3.f + 1.f), Vecf.mult(p2, B / 6.f)))));
+				Vecf.add(Vecf.mult(Vecf.add(Vecf.mult(p0, -0.5f * B - C), Vecf.mult(p2, 0.5f * B + C)), d), Vecf
+						.add(Vecf.mult(p0, B / 6.f), Vecf.add(Vecf.mult(p1, -B / 3.f + 1.f), Vecf.mult(p2, B / 6.f)))));
 	}
 
 	// these next two functions are helpers for cubic interpolation during image
