@@ -65,6 +65,13 @@ public class Vecf {
 	 * println("Vecf cannot be converted to PVector: must have 1-3 components"); }
 	 * return null; }
 	 */
+	
+	public void add(Vecf a) {
+		checkDimensions(a, this);
+		for (int i = 0; i < components.length; i++) {
+			components[i] += a.components[i];
+		}
+	}
 
 	// ================== STATIC METHODS ==================//
 	// Functions of two vectors
@@ -148,26 +155,26 @@ public class Vecf {
 
 	// Functions of one vector
 	public static Vecf onesLike(Vecf a) {
-		Vecf positive = new Vecf(a.dimension());
+		Vecf ones = new Vecf(a.dimension());
 		for (int i = 0; i < a.dimension(); i++) {
-			positive.components[i] = 1.f;
+			ones.components[i] = 1.f;
 		}
-		return positive;
+		return ones;
 	}
 	public static Vecf zeroesLike(Vecf a) {
-		Vecf positive = new Vecf(a.dimension());
+		Vecf zeroes = new Vecf(a.dimension());
 		for (int i = 0; i < a.dimension(); i++) {
-			positive.components[i] = 0.f;
+			zeroes.components[i] = 0.f;
 		}
-		return positive;
+		return zeroes;
 	}
 	
 	public static Vecf abs(Vecf a) {
-		Vecf positive = new Vecf(a.dimension());
+		Vecf positives = new Vecf(a.dimension());
 		for (int i = 0; i < a.dimension(); i++) {
-			positive.components[i] = Math.abs(a.components[i]);
+			positives.components[i] = Math.abs(a.components[i]);
 		}
-		return positive;
+		return positives;
 	}
 
 	public static Vecf mult(Vecf a, float scalar) {

@@ -12,6 +12,10 @@ public final class PixelMath {
 	
 	private PixelMath() {} // static use only
 
+	public static float map(float x, float in_min, float in_max, float out_min, float out_max) {
+		return out_min + (out_max-out_min)*(x - in_min)/(in_max - in_min);
+	}
+	
 	public static float lanczos(float x, float a) {
 		if (x < -a || x > a)
 			return 0;

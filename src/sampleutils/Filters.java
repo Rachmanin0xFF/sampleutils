@@ -3,12 +3,24 @@ package sampleutils;
 public final class Filters {
 	private Filters() {
 	}
-	
-	public static VecImage invert(VecImage input) {
+
+	public static VecImage upscale(VecImage v, int new_width, int new_height) {
+		VecImage upscaled = new VecImage(new_width, new_height, v.channels);
+		for (int x = 0; x < new_width; x++)
+			for (int y = 0; y < new_height; y++) {
+				upscaled.pixels[x][y] = v.sample((x / (float) new_width) * (float) v.width,
+						(y / (float) new_height) * (float) v.height);
+			}
+		return upscaled;
+	}
+
+	public static VecImage invert(VecImage input, float white_level) {
 		VecImage output = new VecImage(input);
-		for(int x = 0; x < output.width; x++) for(int y = 0; y < output.height; y++) {
-			output.pixels[x][y] = Vecf.sub(Vecf.onesLike(output.pixels[x][y]), input.pixels[x][y]);
-		}
+		for (int x = 0; x < output.width; x++)
+			for (int y = 0; y < output.height; y++) {
+				output.pixels[x][y] = Vecf.sub(Vecf.mult(Vecf.onesLike(output.pixels[x][y]), white_level),
+						input.pixels[x][y]);
+			}
 		return output;
 	}
 
@@ -87,36 +99,40 @@ public final class Filters {
 
 		return data[min_E_i];
 	}
-	
+
 	// AdvMAME2x pixel art scaling algorithm
 	// uses
 	public static VecImage EPX2(VecImage input) {
-	  VecImage o = new VecImage(input.width*2, input.height*2, input.channels);
-	  for(int x = 0; x < input.width; x++) {
-	    for(int y = 0; y < input.height; y++) {
-	      Vecf P = input.getPixel(x, y);
-	      Vecf A = input.getPixel(x, y-1);
-	      Vecf B = input.getPixel(x+1, y);
-	      Vecf C = input.getPixel(x-1, y);
-	      Vecf D = input.getPixel(x, y+1);
-	      
-	      Vecf V1 = new Vecf(P);
-	      Vecf V2 = new Vecf(P);
-	      Vecf V3 = new Vecf(P);
-	      Vecf V4 = new Vecf(P);
-	      
-	      if(Vecf.equals(C, A) && !Vecf.equals(C, D) && !Vecf.equals(A, B)) V1 = A;
-	      if(Vecf.equals(A, B) && !Vecf.equals(A, C) && !Vecf.equals(B, D)) V2 = B;
-	      if(Vecf.equals(D, C) && !Vecf.equals(D, B) && !Vecf.equals(C, A)) V3 = C;
-	      if(Vecf.equals(B, D) && !Vecf.equals(B, A) && !Vecf.equals(D, C)) V4 = D;
-	      
-	      o.pixels[x*2][y*2] = V1;
-	      o.pixels[x*2+1][y*2] = V2;
-	      o.pixels[x*2][y*2+1] = V3;
-	      o.pixels[x*2+1][y*2+1] = V4;
-	    }
-	  }
-	  return o;
+		VecImage o = new VecImage(input.width * 2, input.height * 2, input.channels);
+		for (int x = 0; x < input.width; x++) {
+			for (int y = 0; y < input.height; y++) {
+				Vecf P = input.getPixel(x, y);
+				Vecf A = input.getPixel(x, y - 1);
+				Vecf B = input.getPixel(x + 1, y);
+				Vecf C = input.getPixel(x - 1, y);
+				Vecf D = input.getPixel(x, y + 1);
+
+				Vecf V1 = new Vecf(P);
+				Vecf V2 = new Vecf(P);
+				Vecf V3 = new Vecf(P);
+				Vecf V4 = new Vecf(P);
+
+				if (Vecf.equals(C, A) && !Vecf.equals(C, D) && !Vecf.equals(A, B))
+					V1 = A;
+				if (Vecf.equals(A, B) && !Vecf.equals(A, C) && !Vecf.equals(B, D))
+					V2 = B;
+				if (Vecf.equals(D, C) && !Vecf.equals(D, B) && !Vecf.equals(C, A))
+					V3 = C;
+				if (Vecf.equals(B, D) && !Vecf.equals(B, A) && !Vecf.equals(D, C))
+					V4 = D;
+
+				o.pixels[x * 2][y * 2] = V1;
+				o.pixels[x * 2 + 1][y * 2] = V2;
+				o.pixels[x * 2][y * 2 + 1] = V3;
+				o.pixels[x * 2 + 1][y * 2 + 1] = V4;
+			}
+		}
+		return o;
 	}
 
 }

@@ -15,15 +15,16 @@ public class VecImage {
 	public int height;
 	public int channels;
 
-	EdgeModes edgeMode = EdgeModes.CLAMP;
-	FilterModes filterMode = FilterModes.BILINEAR;
-	BCSplineModes BCSplineMode = BCSplineModes.MITCHELL_NETRAVALI;
+	public EdgeModes edgeMode = EdgeModes.CLAMP;
+	public FilterModes filterMode = FilterModes.BILINEAR;
+	public BCSplineModes BCSplineMode = BCSplineModes.MITCHELL_NETRAVALI;
 
 	public float BC_SPLINE_B = 0.f;
 	public float BC_SPLINE_C = 0.f;
+	public int LANCZOS_RADIUS = 3;
 
 	public static enum FilterModes {
-		NEAREST, BILINEAR, BICUBIC, BCSPLINE
+		NEAREST, BILINEAR, BICUBIC, LANCZOS, BCSPLINE
 	}
 
 	public static enum BCSplineModes {
@@ -49,6 +50,9 @@ public class VecImage {
 	 * @param height the the height of the image in pixels
 	 */
 	public VecImage(int width, int height, int channels) {
+		if(width < 1 || height < 1) {
+			throw new IllegalArgumentException("Image dimensions must be at least (1px x 1px)!");
+		}
 		pixels = new Vecf[width][height];
 		for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++) {
@@ -57,18 +61,6 @@ public class VecImage {
 		this.width = width;
 		this.height = height;
 		this.channels = channels;
-	}
-
-	public VecImage(PImage p) {
-		pixels = new Vecf[p.width][p.height];
-		for (int x = 0; x < p.width; x++)
-			for (int y = 0; y < p.height; y++) {
-				int c = p.get(x, y);
-				pixels[x][y] = new Vecf(r(c) / 255.f, g(c) / 255.f, b(c) / 255.f, a(c) / 255.f);
-			}
-		this.width = p.width;
-		this.height = p.height;
-		this.channels = 4;
 	}
 
 	// Makes a shallow copy
@@ -94,12 +86,12 @@ public class VecImage {
 		for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++) {
 				if (channels > 3)
-					output[x + y * width] = color((int) (pixels[x][y].components[0] * 255.f),
-							(int) (pixels[x][y].components[1] * 255.f), (int) (pixels[x][y].components[2] * 255.f),
-							(int) (pixels[x][y].components[3] * 255.f));
+					output[x + y * width] = color((int) (pixels[x][y].components[0]),
+							(int) (pixels[x][y].components[1]), (int) (pixels[x][y].components[2]),
+							(int) (pixels[x][y].components[3]));
 				else if (channels == 3)
-					output[x + y * width] = color((int) (pixels[x][y].components[0] * 255.f),
-							(int) (pixels[x][y].components[1] * 255.f), (int) (pixels[x][y].components[2] * 255.f),
+					output[x + y * width] = color((int) (pixels[x][y].components[0]),
+							(int) (pixels[x][y].components[1]), (int) (pixels[x][y].components[2]),
 							255);
 			}
 		return output;
@@ -113,27 +105,31 @@ public class VecImage {
 			break;
 		case WRAP:
 			x = PixelMath.mod(x, width);
-			y = PixelMath.mod(x, height);
+			y = PixelMath.mod(y, height);
 			break; // TODO
 		case WHITE:
 			if (x >= width || y >= height || x < 0 || y < 0)
-				return Vecf.onesLike(pixels[x][y]);
+				return Vecf.onesLike(pixels[0][0]);
 			break;
 		case BLACK:
 			if (x >= width || y >= height || x < 0 || y < 0)
-				return Vecf.zeroesLike(pixels[x][y]);
+				return Vecf.zeroesLike(pixels[0][0]);
 			break;
 		}
 		return pixels[x][y];
 	}
 
 	public Vecf sample(float x, float y) {
+		x -= 0.5f;
+		y -= 0.5f;
 		switch (filterMode) {
 		case NEAREST:
+			x += 0.5f;
+			y += 0.5f;
 			return getPixel((int) x, (int) y);
 		case BILINEAR:
-			float dx = x % 1;
-			float dy = y % 1;
+			float dx = (x+1) % 1;
+			float dy = (y+1) % 1;
 
 			return Vecf.add(
 					Vecf.add(Vecf.mult(getPixel((int) Math.floor(x), (int) Math.floor(y)), (1 - dx) * (1 - dy)),
@@ -142,6 +138,8 @@ public class VecImage {
 							Vecf.mult(getPixel((int) Math.floor(x + 1), (int) Math.floor(y + 1)), dx * dy)));
 		case BICUBIC:
 			return sampleCubic(x, y);
+		case LANCZOS:
+			return sampleLanczos(x, y, LANCZOS_RADIUS);
 		case BCSPLINE:
 			switch (BCSplineMode) {
 			case HERMITE:
@@ -268,21 +266,32 @@ public class VecImage {
 								Vecf.mult(Vecf.add(Vecf.mult(Vecf.sub(_p1, _p2), 3.f), Vecf.sub(_p3, _p0)), _x))), _x)),
 				0.5f * _x));
 	}
-
-	int a(int c) {
-		return (c >> 24) & 255;
-	}
-
-	int r(int c) {
-		return (c >> 16) & 255;
-	}
-
-	int g(int c) {
-		return (c >> 8) & 255;
-	}
-
-	int b(int c) {
-		return c & 255;
+	
+	Vecf sampleLanczos(float x, float y, int a) {
+		// TODO: add case for sampling directly on the point
+		// maybe do that everywhere, lol
+		int x_floor = (int)Math.floor(x);
+		int y_floor = (int)Math.floor(y);
+		
+		// The 2D Lanczos kernel is, by def., seperable
+		// this speeds things up by a factor of (a)
+		float[] LUTX = new float[2*a];
+		float[] LUTY = new float[2*a];
+		for(int t = 1-a; t <= a; t++) {
+			LUTX[t+a-1] = PixelMath.lanczos(x_floor - x + t, a);
+			LUTY[t+a-1] = PixelMath.lanczos(y_floor - y + t, a);
+		}
+		
+		float weight_sum = 0.f;
+		Vecf sample_sum = new Vecf(this.channels);
+		for(int ix = x_floor + 1-a; ix <= x_floor + a; ix++) {
+			for(int iy = y_floor + 1-a; iy <= y_floor + a; iy++) {
+				float s_i = LUTX[ix - (x_floor + 1-a)]*LUTY[iy - (y_floor + 1-a)];
+				sample_sum.add(Vecf.mult(getPixel(ix, iy), s_i));
+				weight_sum += s_i;
+			}
+		}
+		return Vecf.mult(sample_sum, 1.f/weight_sum);
 	}
 
 	private void welcome() {
