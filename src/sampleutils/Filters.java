@@ -1,19 +1,37 @@
 package sampleutils;
 
+/**
+ * static VecImage filters; includes up/downscaling
+ */
 public final class Filters {
 	private Filters() {
 	}
-
-	public static VecImage upscale(VecImage v, int new_width, int new_height) {
-		VecImage upscaled = new VecImage(new_width, new_height, v.channels);
+	
+	/**
+	 * Upscales an image using its edge and sample mode properties.
+	 * @param input the VecImage to upscale
+	 * @param new_width
+	 * @param new_height
+	 * @return the upscaled VecImage
+	 */
+	public static VecImage upscale(VecImage input, int new_width, int new_height) {
+		VecImage upscaled = new VecImage(new_width, new_height, input.channels);
 		for (int x = 0; x < new_width; x++)
 			for (int y = 0; y < new_height; y++) {
-				upscaled.pixels[x][y] = v.sample((x / (float) new_width) * (float) v.width,
-						(y / (float) new_height) * (float) v.height);
+				upscaled.pixels[x][y] = input.sample((x / (float) new_width) * (float) input.width,
+						(y / (float) new_height) * (float) input.height);
 			}
 		return upscaled;
 	}
-
+	
+	/**
+	 * Inverts an image given a white level.
+	 * <p>
+	 * Each component of each pixel is replaced with <code>(white_level - component)</code>.
+	 * @param input
+	 * @param white_level
+	 * @return the inverted VecImage
+	 */
 	public static VecImage invert(VecImage input, float white_level) {
 		VecImage output = new VecImage(input);
 		for (int x = 0; x < output.width; x++)
@@ -23,7 +41,18 @@ public final class Filters {
 			}
 		return output;
 	}
-
+	
+	/**
+	 * Calculates the medioid (higher-dimensional median analog) of a VecImage.
+	 * <p>
+	 * The medioid of an N-dimensional list of vectors is the vector with the
+	 * smallest summed distance to every other vector in the list. This method uses the
+	 * <a href="http://proceedings.mlr.press/v54/newling17a/newling17a.pdf">trimed</a> algorithm
+	 * to compute the mediod, which runs in O(N^(3/2)).
+	 * @param input
+	 * @param rad the (circular) radius to take the medioid over
+	 * @return the medioid-filtered image
+	 */
 	public static VecImage mediod(VecImage input, int rad) {
 		VecImage output = new VecImage(input);
 		boolean[][] kernel = new boolean[rad * 2 + 1][rad * 2 + 1];
@@ -102,6 +131,16 @@ public final class Filters {
 
 	// AdvMAME2x pixel art scaling algorithm
 	// uses
+	/**
+	 * Scales an input image by 2x. Best for upscaling pixel art.
+	 * <p>
+	 * The <a href="https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#EPX/Scale2%C3%97/AdvMAME2%C3%97">EPX2</a>
+	 * algorithm was developed by Eric Johnston in 1992 as a way to upscale
+	 * classic games to higher-resolution monitors. The algorithm works well on small photos
+	 * with blobs of same-color pixels.
+	 * @param input
+	 * @return
+	 */
 	public static VecImage EPX2(VecImage input) {
 		VecImage o = new VecImage(input.width * 2, input.height * 2, input.channels);
 		for (int x = 0; x < input.width; x++) {

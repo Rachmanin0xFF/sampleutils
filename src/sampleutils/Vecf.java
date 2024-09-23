@@ -1,7 +1,5 @@
 package sampleutils;
 
-import processing.core.*;
-
 /**
  * A class to perform basic operations on arbitrary-length floating-point
  * vectors. Created because PVector can only store 3 components.
@@ -27,13 +25,13 @@ public class Vecf {
 	 */
 
 	public float[] components;
-
+	
+	/**
+	 * Initalizes a zero vector with <code>dimension</code> components.
+	 * @param dimension
+	 */
 	public Vecf(int dimension) {
 		components = new float[dimension];
-	}
-
-	public Vecf(PVector v) {
-		components = new float[] { v.x, v.y, v.z };
 	}
 
 	public Vecf(float... args) {

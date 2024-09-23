@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
+/**
+ * Algorithms and math for sampling, color, and other image-related utilities.
+ */
 public final class PixelMath {
 
 	static final float PI = 3.14159265359f;
@@ -12,10 +15,28 @@ public final class PixelMath {
 	
 	private PixelMath() {} // static use only
 
+	/**
+	 * Similar to Processing's map() function.
+	 * <p>
+	 * Maps x from the range (in_min, in_max) to (out_min, out_max) without clamping. The output is precisely
+	 * <code>out_min + (out_max-out_min)*(x - in_min)/(in_max - in_min)</code>.
+	 * @param x The number to map
+	 * @param in_min The minimum value of x
+	 * @param in_max The maximum value of x
+	 * @param out_min The minimum output value
+	 * @param out_max The maximum output value
+	 * @return x mapped to the new range
+	 */
 	public static float map(float x, float in_min, float in_max, float out_min, float out_max) {
 		return out_min + (out_max-out_min)*(x - in_min)/(in_max - in_min);
 	}
 	
+	/**
+	 * Computes a 1-dimensional Lanczos kernel.
+	 * @param x The sample location.
+	 * @param a The width of the kernel (typically an integer).
+	 * @return The value of L(x)
+	 */
 	public static float lanczos(float x, float a) {
 		if (x < -a || x > a)
 			return 0;
@@ -23,7 +44,12 @@ public final class PixelMath {
 			return 1;
 		return (float) (a * Math.sin(PI * x) * Math.sin(PI * x / a) / (PI * PI * x * x));
 	}
-
+	
+	/**
+	 * A map from [0,1] onto [0,1] with first derivatives equal to zero at 0 and 1.
+	 * @param x
+	 * @return 3x^2-2x^3
+	 */
 	public static float smoothstep(float x) {
 		if (x < 0)
 			return 0;
@@ -31,7 +57,12 @@ public final class PixelMath {
 			return 1;
 		return 3 * x * x - 2 * x * x * x;
 	}
-
+	
+	/**
+	 * A map from [0,1] onto [0,1] with first and second derivatives equal to zero at 0 and 1.
+	 * @param x
+	 * @return 6x^5-15x^4+10x^3
+	 */
 	public static float smootherstep(float x) {
 		if (x < 0)
 			return 0;
@@ -41,10 +72,26 @@ public final class PixelMath {
 	}
 	
 	// this can handle negatives (x>>31 checks if the int is negative)
+	/**
+	 * Similar to java's modulo, but wraps neatly into the negatives.
+	 * <p>
+	 * For example, mod(-1, 3) = 2.
+	 * While this is not technically how modulo is expected to operate, it is useful for texture wrapping.
+	 * @param x
+	 * @param n
+	 * @return modulo with support for negative numbers.
+	 */
 	public static int mod(int x, int n) {
 		return ((x >> 31) & n) + (x % n);
 	}
 
+	/**
+	 * Clamps the input between low and high.
+	 * @param x
+	 * @param low
+	 * @param high
+	 * @return (low if x &lt;= low), (high if x &lt;= high), otherwise x
+	 */
 	public static int clamp_inclusive(int x, int low, int high) {
 		if (x <= low)
 			return low;
@@ -66,14 +113,28 @@ public final class PixelMath {
 	private static int round(float x) {
 		return (int) (x + 0.5);
 	}
-
-	// modified sunflower function
-	// https://stackoverflow.com/a/28572551
+	
+	/**
+	 * Returns n 2D Vecfs evenly distributed in a disk with radius 1.
+	 * <p>
+	 * Uses a modified <a href="https://stackoverflow.com/a/28572551">'sunflower'</a> function.
+	 * Calls <code>sunflower(n, 0.75)</code>.
+	 * @param n the number of points to return
+	 * @return an array of n 2D Vecfs with magnitude &lt;= 1
+	 */
 	public static Vecf[] sunflower(int n) {
 		return sunflower(n, 0.75f);
 	}
 
 	// higher alpha = more constant edge, default is 0.75
+	/**
+	 * Returns n 2D Vecfs evenly distributed in a disk with radius 1.
+	 * <p>
+	 * Uses a modified <a href="https://stackoverflow.com/a/28572551">'sunflower'</a> function.
+	 * @param n the number of points to return
+	 * @param alpha the edge uniformity. A higher alpha means a smoother edge.
+	 * @return an array of n 2D Vecfs with magnitude &lt;= 1
+	 */
 	public static Vecf[] sunflower(int n, float alpha) {
 		Vecf[] o = new Vecf[n];
 		int b = round(alpha * (float) Math.sqrt(n));
@@ -89,6 +150,17 @@ public final class PixelMath {
 
 	// r - grid radius, k - sample attempts (default 20)
 	// returns an evenly-spaced anisotropic set of points in the disk r < 1 centered at the origin
+	/**
+	 * Generates an evenly-spaced anisotropic array of points in a disk with radius 1.
+	 * <p>
+	 * This is based on the <a href="http://extremelearning.com.au/an-improved-version-of-bridsons-algorithm-n-for-poisson-disc-sampling/">
+	 * "maximal poisson disk sampling"</a> algorithm. Typically, this produces very small rivers in the points
+	 * if theta is non-uniformly distributed (and maybe in general?). This is counteracted here by adding
+	 * a small random value to the radius.
+	 * @param r the radius of the hashing grid
+	 * @param k the number of sample attempts (recommended value is 20)
+	 * @return A set of 
+	 */
 	public static Vecf[] poisson(int r, int k) {
 		ArrayList<Vecf> dead = new ArrayList<Vecf>();
 		HashSet<Vecf> active = new HashSet<Vecf>(); // O(1) removal time

@@ -3,18 +3,19 @@ package sampleutils;
 import processing.core.*;
 
 /**
- * PVectorImage is
+ * An image class supporting an arbitrary number of floating-point precision channels.
+ * <p>
+ * Images also carry information about their sampling/edge filtering preferences in enums and numbers.
  */
-
 public class VecImage {
 	// myParent is a reference to the parent sketch
-	Vecf[][] pixels;
+	public Vecf[][] pixels;
 
 	public final static String VERSION = "##library.prettyVersion##";
 	public int width;
 	public int height;
 	public int channels;
-
+	
 	public EdgeModes edgeMode = EdgeModes.CLAMP;
 	public FilterModes filterMode = FilterModes.BILINEAR;
 	public BCSplineModes BCSplineMode = BCSplineModes.MITCHELL_NETRAVALI;
@@ -22,32 +23,38 @@ public class VecImage {
 	public float BC_SPLINE_B = 0.f;
 	public float BC_SPLINE_C = 0.f;
 	public int LANCZOS_RADIUS = 3;
-
+	
+	/**
+	 * Image filter modes (for both up and down-sampling).
+	 */
 	public static enum FilterModes {
 		NEAREST, BILINEAR, BICUBIC, LANCZOS, BCSPLINE
 	}
 
+	/**
+	 * Mitchell–Netravali filter (BC-spline) presets.
+	 */
 	public static enum BCSplineModes {
 		HERMITE, // B=0, C=0
 		BSPLINE, // B=1, C=0 (smoothest)
 		SHARP_BICUBIC, // B=0, C=1
 		MITCHELL_NETRAVALI, // B=1/3, C=1/3 (recommended)
 		CATMULL_ROM, // B=0, C=1/2
-		PHOTOSHOP_CUBIC, // B=0, C=3/4
+		PHOTOSHOP_BICUBIC, // B=0, C=3/4
 		CUSTOM
 	}
-
+	
+	/**
+	 * Texture wrap modes for sampling outside of an image's bounds.
+	 */
 	public static enum EdgeModes {
 		CLAMP, WRAP, BLACK, WHITE
 	}
 
 	/**
-	 * a Constructor, usually called in the setup() method in your sketch to
-	 * initialize and start the Library.
-	 * 
-	 * @example Hello
 	 * @param width  the width of the image in pixels
 	 * @param height the the height of the image in pixels
+	 * @param channels the number of color channel the image has (usually 3 or 4)
 	 */
 	public VecImage(int width, int height, int channels) {
 		if(width < 1 || height < 1) {
@@ -63,7 +70,10 @@ public class VecImage {
 		this.channels = channels;
 	}
 
-	// Makes a shallow copy
+	/**
+	 * Initializes a shallow copy of another image.
+	 * @param p the image to copy data from
+	 */
 	public VecImage(VecImage p) {
 		pixels = new Vecf[p.width][p.height];
 		this.width = p.width;
@@ -74,13 +84,16 @@ public class VecImage {
 				pixels[x][y] = new Vecf(p.pixels[x][y]);
 			}
 	}
-
-	public final int color(int r, int g, int b, int alpha) {
+	
+	private final int color(int r, int g, int b, int alpha) {
 		return ((alpha < 0 ? 0 : (alpha > 255 ? 255 : alpha)) << 24) | ((r < 0 ? 0 : (r > 255 ? 255 : r)) << 16)
 				| ((g < 0 ? 0 : (g > 255 ? 255 : g)) << 8) | ((b < 0 ? 0 : (b > 255 ? 255 : b)));
 	}
 
-	// for use with Processing's PImage
+	/**
+	 * Generates an array compatible with Processing's PImage.pixels[].
+	 * @return A flattened, width*height-length array of integers representing 24-bit ARGB colors.
+	 */
 	public int[] toIntegerPixels() {
 		int[] output = new int[width * height];
 		for (int x = 0; x < width; x++)
@@ -96,7 +109,15 @@ public class VecImage {
 			}
 		return output;
 	}
-
+	
+	/**
+	 * Returns the pixel at the integer coordinates (x, y).
+	 * <p>
+	 * If x or y are outside the image bounds, return value is based on the image's <code>edgeMode</code>.
+	 * @param x
+	 * @param y
+	 * @return the Vecf associated with the input coordinates
+	 */
 	public Vecf getPixel(int x, int y) {
 		switch (edgeMode) {
 		case CLAMP:
@@ -118,7 +139,16 @@ public class VecImage {
 		}
 		return pixels[x][y];
 	}
-
+	
+	/**
+	 * Returns an interpolated sample of the image using the input floating-point coordinates.
+	 * <p>
+	 * The interpolation mode used is determined by the image's <code>filterMode</code>.
+	 * Edge modes will also affect the output if sampling near the edges of the image.
+	 * @param x
+	 * @param y
+	 * @return A Vecf obtained by reconstructing the imaged object at (x, y)
+	 */
 	public Vecf sample(float x, float y) {
 		x -= 0.5f;
 		y -= 0.5f;
@@ -150,7 +180,7 @@ public class VecImage {
 				return sampleBC(x, y, 0.f, 1.f);
 			case MITCHELL_NETRAVALI:
 				return sampleBC(x, y, 1.f / 3.f, 1.f / 3.f);
-			case PHOTOSHOP_CUBIC:
+			case PHOTOSHOP_BICUBIC:
 				return sampleBC(x, y, 0.f, 0.5f);
 			case SHARP_BICUBIC:
 				return sampleBC(x, y, 0.f, 0.75f);
