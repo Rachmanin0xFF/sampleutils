@@ -2,4 +2,4 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 
 **sampleutils** is an image resampling, filtering, and utility library for [Processing](https://processing.org/).
 
-![interpolation example](examples/sampleutils_filtering/interpolation_example_output.png)
+![interpolation example](examples/sampleutils_interpolationg/interpolation_example_output.png)
