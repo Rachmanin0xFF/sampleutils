@@ -9,7 +9,7 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 * Nearest-neighbor interpolation (no interpolation)
 * Bilinear interpolation
 * Bicubic interpolation
-* Mitcheljl-netravali filters (BC-splines)
+* Mitchell-Netravali filters (BC-splines)
 * Lanczos resampling
 * EXX2 upscaling
 * Poisson disk generation
