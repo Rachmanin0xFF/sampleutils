@@ -2,9 +2,10 @@
 
 Note: This is a WIP; I'm cobbling together this library from various functions and utility scripts I've written over the years. First release should be out soon.
 
-## Interpolation/Resampling
+## Features
+### Interpolation/Resampling
 ![interpolation example](examples/sampleutils_interpolation/interpolation_example_output.png)
-### Supported:
+#### Supported:
 * Nearest-neighbor interpolation (no interpolation)
 * Bilinear interpolation
 * Bicubic interpolation
@@ -13,19 +14,18 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 * EXX2 upscaling
 * Poisson disk generation
 * Sunflower disk generation
-### Planned:
+#### Planned:
 * Box filtering
 * Gaussian fitlering
-* Arbitrary kernel filtering
 * FFT methods
-### *Probably* Not planned
+#### *Probably* Not planned
 * CNN-based/DLSS-style upscaling
 
-## Filters
-### Supported:
+### Filters
+#### Supported:
 * Circular medioid blurring
 * Inversion
-### Planned:
+#### Planned:
 * Kernel blurs (convolutions)
 * Unsharp masking / local contrast enhancement
 * Tone mapping
@@ -36,8 +36,8 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 * Color space transformations
 * LUT extraction from image pairs
 
-## Quantization/Dithering
-### Planned:
+### Quantization/Dithering
+#### Planned:
 * Error diffusion matrix-based methods
 * Blue noise
 * Bayer matrices
