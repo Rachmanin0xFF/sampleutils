@@ -152,6 +152,18 @@ public final class PixelMath {
 			return 1;
 		return (float) (a * Math.sin(PI * x) * Math.sin(PI * x / a) / (PI * PI * x * x));
 	}
+	
+	/**
+	 * The unnormalized Laplacian of the 2D Gaussian function.
+	 * @param x
+	 * @param y
+	 * @param stdev The standard deviation of the Gaussian.
+	 * @return
+	 */
+	float LoG(float x, float y, float stdev) {
+	  float xp = -(x*x+y*y)/(2*stdev*stdev);
+	  return -(1.f+xp)*(float)Math.exp(xp)/(PI*stdev*stdev); // NOT NORMALIZED PROPERLY FOR CONSTANT EDGE DETECTION VALUES WITH VARYING DEVIATIONS!!!
+	}
 
 	/**
 	 * A map from [0,1] onto [0,1] with first derivatives equal to zero at 0 and 1.
@@ -224,7 +236,7 @@ public final class PixelMath {
 	}
 
 	private static int round(float x) {
-		return (int) (x + 0.5);
+		return (int) (x + 0.5f);
 	}
 
 	/**
