@@ -8,6 +8,33 @@ public final class Filters {
 	}
 	
 	/**
+	 * Convolves a VecImage with a kernel. The kernel may be unnormalized, but it must have odd dimensions.
+	 * @param input Any VecImage.
+	 * @param kernel A (2*n+1) by (2*m+1) array of floats.
+	 * @return The VecImage <a href="https://en.wikipedia.org/wiki/Convolution#Discrete_convolution">convolved</a> with the kernel.
+	 */
+	public static VecImage convolve(VecImage input, float[][] kernel) {
+		// conveniently, this also checks that the lengths aren't zero
+		if(kernel.length % 2 == 0 || kernel[0].length%2 == 0) {
+			throw new IllegalArgumentException("Kernel dimensions must be odd numbers!");
+		}
+		int radiusX = (kernel.length-1)/2;
+		int radiusY = (kernel.length-1)/2;
+		VecImage output = new VecImage(input.width, input.height, input.channels);
+		
+		for(int x = 0; x < output.width; x++) {
+			for(int y = 0; y < output.height; y++) {
+				for(int i = -radiusX; i < radiusX; i++) {
+					for(int j = -radiusY; j < radiusY; j++) {
+						output.pixels[x][y].add(Vecf.mult(input.getPixel(x+i, y+j), kernel[i+radiusX][j+radiusY]));
+					}
+				}
+			}
+		}
+		return output;
+	}
+	
+	/**
 	 * Upscales an image using its edge and sample mode properties.
 	 * @param input the VecImage to upscale
 	 * @param new_width

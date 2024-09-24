@@ -98,6 +98,7 @@ public class VecImage {
 		int[] output = new int[width * height];
 		for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++) {
+				// check if we have enough information for alpha. if not, make fully opaque
 				if (channels > 3)
 					output[x + y * width] = color((int) (pixels[x][y].components[0]),
 							(int) (pixels[x][y].components[1]), (int) (pixels[x][y].components[2]),
@@ -196,7 +197,7 @@ public class VecImage {
 	Vecf sampleBC(float x, float y, float B, float C) {
 		Vecf p0, p1, p2, p3;
 		float d = x - (int) Math.floor(x);
-
+		// get relevant samples
 		if (d == 0.0) {
 			p0 = sampleBCY((int) Math.floor(x) - 1, y, B, C);
 			p1 = sampleBCY((int) Math.floor(x), y, B, C);
@@ -208,6 +209,7 @@ public class VecImage {
 			p2 = sampleBCY((int) Math.ceil(x), y, B, C);
 			p3 = sampleBCY((int) Math.ceil(x) + 1, y, B, C);
 		}
+		// combine
 		return Vecf.add(
 				Vecf.add(
 						Vecf.mult(
@@ -303,7 +305,7 @@ public class VecImage {
 		int x_floor = (int)Math.floor(x);
 		int y_floor = (int)Math.floor(y);
 		
-		// The 2D Lanczos kernel is, by def., seperable
+		// The 2D Lanczos kernel is, by def., separable
 		// this speeds things up by a factor of (a)
 		float[] LUTX = new float[2*a];
 		float[] LUTY = new float[2*a];

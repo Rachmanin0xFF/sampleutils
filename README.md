@@ -25,8 +25,9 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 #### Supported:
 * Circular medioid blurring
 * Inversion
-#### Planned:
 * Kernel blurs (convolutions)
+* Bivariate Gaussian kernel
+#### Planned:
 * Unsharp masking / local contrast enhancement
 * Tone mapping
 * Gamut Masking / clipping

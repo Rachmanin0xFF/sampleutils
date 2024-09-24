@@ -12,27 +12,135 @@ public final class PixelMath {
 	static final float PI = 3.14159265359f;
 	static final float TWO_PI = 6.28318530718f;
 	static final float PHI = 1.61803398875f;
+
+	private PixelMath() {
+	} // static use only
 	
-	private PixelMath() {} // static use only
+	/**
+	 * Normalizes a 2D array of floats so that its entries sum to one.
+	 * @param input an input array of floats
+	 * @return The normalized array.
+	 */
+	public static float[][] normalize(float[][] input) {
+		float[][] output = new float[input.length][input[0].length];
+		float sum = 0.f;
+		for(int x = 0; x < input.length; x++) for(int y = 0; y < input[0].length; y++) {
+			sum += input[x][y];
+		}
+		if(sum == 0) throw new IllegalArgumentException("Input array sums to zero! Cannot normalize!");
+		for(int x = 0; x < input.length; x++) for(int y = 0; y < input[0].length; y++) {
+			output[x][y] = input[x][y] / sum;
+		}
+		return output;
+	}
+	
+	/**
+	 * Generates a normalized 2D Gaussian kernel.
+	 * 
+	 * @param stdev The standard deviation of the Gaussian.
+	 * @param stdevs_to_include The extent of the Gaussian contained in the kernel, in units of standard deviation.
+	 * @return A two-dimensional array of floating-point values that sum to one.
+	 */
+	public static float[][] gaussianKernel(float stdev, float stdevs_to_include) {
+		if (stdev <= 0 || stdevs_to_include <= 0) {
+			throw new IllegalArgumentException("Gaussian kernel input parameters cannot be <= 0!");
+		}
+
+		// generate separable part
+		int sample_radius = (int) Math.ceil(stdevs_to_include * stdev);
+		float[] kernelX = new float[2 * sample_radius + 1];
+
+		for (int x = -sample_radius; x <= sample_radius; x++) {
+			kernelX[x + sample_radius] = unnormalizedGaussian(x, stdev);
+		}
+		// combine
+		float[][] outputKernel = new float[kernelX.length][kernelX.length];
+		float sum = 0.f;
+		for (int x = 0; x <= kernelX.length; x++)
+			for (int y = 0; y <= kernelX.length; y++) {
+				outputKernel[x][y] = kernelX[x] * kernelX[y];
+				sum += outputKernel[x][y];
+			}
+		// normalize
+		for (int x = 0; x <= kernelX.length; x++)
+			for (int y = 0; y <= kernelX.length; y++) {
+				outputKernel[x][y] /= sum;
+			}
+		return outputKernel;
+
+	}
+	
+	/**
+	 * Generates a normalized bivariate Gaussian kernel.
+	 * <p>
+	 * In addition to standard deviations in the x and y direction, this function also accepts a Pearson correlation parameter
+	 * (higher values 'squish' the Gaussian along the diagonal). Together, these three values are sufficient to parameterize
+	 * the space of symmetric covariance matrices (stdevx^2 and stdevy^2 on the diagonal, rho*stdevx*stdevy on the off-diagonal).
+	 * <p>
+	 * For axis-aligned distributions (i.e. vertical and horizontal blurs), rho should be zero.
+	 * 
+	 * @param stdevx The standard deviation of the distribution in the x direction.
+	 * @param stdevy The standard deviation of the distribution in the y direction.
+	 * @param rho The Pearson correlation of the Gaussian distribution.
+	 * @param stdevs_to_include The extent of the Gaussian contained in the kernel, in units of standard deviation.
+	 * @return A two-dimensional array of floating-point values that sum to one.
+	 */
+	public static float[][] bivariateGaussianKernel(float stdevx, float stdevy, float rho, float stdevs_to_include) {
+		if (stdevx <= 0 || stdevy <= 0 || stdevs_to_include <= 0) {
+			throw new IllegalArgumentException("Gaussian kernel input parameters cannot be <= 0!");
+		}
+		
+		// while this kernel is still separable with a change of basis, it is not separable
+		// on our discrete grid, so we need to do everything at once
+		int sample_radius = (int) Math.ceil(stdevs_to_include * Math.max(stdevx, stdevy));
+		float[][] kernel = new float[2 * sample_radius + 1][2 * sample_radius + 1];
+		
+		float sum = 0.f;
+		for (int x = -sample_radius; x <= sample_radius; x++)
+			for (int y = -sample_radius; y <= sample_radius; y++) {
+				kernel[x][y] = unnormalizedBivariateGaussian(x, y, stdevx, stdevy, rho);
+				sum += kernel[x][y];
+			}
+		// normalize
+		for (int x = 0; x <= kernel.length; x++)
+			for (int y = 0; y <= kernel.length; y++) {
+				kernel[x][y] /= sum;
+			}
+		return kernel;
+
+	}
+
+	private static float unnormalizedBivariateGaussian(float x, float y, float stdevx, float stdevy, float rho) {
+		float factor = -1.f/(2.f*(1.f - rho*rho));
+		factor *= x*x/(stdevx*stdevx) - 2*rho*x*y/(stdevx*stdevy) + y*y/(stdevy*stdevy);
+		return (float) Math.exp(factor);
+	}
+
+	private static float unnormalizedGaussian(float x, float stdev) {
+		return (float) Math.exp(-x * x / (2.f * stdev * stdev));
+	}
 
 	/**
 	 * Similar to Processing's map() function.
 	 * <p>
-	 * Maps x from the range (in_min, in_max) to (out_min, out_max) without clamping. The output is precisely
+	 * Maps x from the range (in_min, in_max) to (out_min, out_max) without
+	 * clamping. The output is precisely
 	 * <code>out_min + (out_max-out_min)*(x - in_min)/(in_max - in_min)</code>.
-	 * @param x The number to map
-	 * @param in_min The minimum value of x
-	 * @param in_max The maximum value of x
+	 * 
+	 * @param x       The number to map
+	 * @param in_min  The minimum value of x
+	 * @param in_max  The maximum value of x
 	 * @param out_min The minimum output value
 	 * @param out_max The maximum output value
 	 * @return x mapped to the new range
 	 */
 	public static float map(float x, float in_min, float in_max, float out_min, float out_max) {
-		return out_min + (out_max-out_min)*(x - in_min)/(in_max - in_min);
+		return out_min + (out_max - out_min) * (x - in_min) / (in_max - in_min);
 	}
-	
+
 	/**
 	 * Computes a 1-dimensional Lanczos kernel.
+	 * 
 	 * @param x The sample location.
 	 * @param a The width of the kernel (typically an integer).
 	 * @return The value of L(x)
@@ -44,9 +152,10 @@ public final class PixelMath {
 			return 1;
 		return (float) (a * Math.sin(PI * x) * Math.sin(PI * x / a) / (PI * PI * x * x));
 	}
-	
+
 	/**
 	 * A map from [0,1] onto [0,1] with first derivatives equal to zero at 0 and 1.
+	 * 
 	 * @param x
 	 * @return 3x^2-2x^3
 	 */
@@ -57,9 +166,11 @@ public final class PixelMath {
 			return 1;
 		return 3 * x * x - 2 * x * x * x;
 	}
-	
+
 	/**
-	 * A map from [0,1] onto [0,1] with first and second derivatives equal to zero at 0 and 1.
+	 * A map from [0,1] onto [0,1] with first and second derivatives equal to zero
+	 * at 0 and 1.
+	 * 
 	 * @param x
 	 * @return 6x^5-15x^4+10x^3
 	 */
@@ -70,13 +181,14 @@ public final class PixelMath {
 			return 1;
 		return 6 * x * x * x * x * x - 15 * x * x * x * x + 10 * x * x * x;
 	}
-	
+
 	// this can handle negatives (x>>31 checks if the int is negative)
 	/**
 	 * Similar to java's modulo, but wraps neatly into the negatives.
 	 * <p>
-	 * For example, mod(-1, 3) = 2.
-	 * While this is not technically how modulo is expected to operate, it is useful for texture wrapping.
+	 * For example, mod(-1, 3) = 2. While this is not technically how modulo is
+	 * expected to operate, it is useful for texture wrapping.
+	 * 
 	 * @param x
 	 * @param n
 	 * @return modulo with support for negative numbers.
@@ -87,6 +199,7 @@ public final class PixelMath {
 
 	/**
 	 * Clamps the input between low and high.
+	 * 
 	 * @param x
 	 * @param low
 	 * @param high
@@ -113,12 +226,14 @@ public final class PixelMath {
 	private static int round(float x) {
 		return (int) (x + 0.5);
 	}
-	
+
 	/**
 	 * Returns n 2D Vecfs evenly distributed in a disk with radius 1.
 	 * <p>
-	 * Uses a modified <a href="https://stackoverflow.com/a/28572551">'sunflower'</a> function.
+	 * Uses a modified
+	 * <a href="https://stackoverflow.com/a/28572551">'sunflower'</a> function.
 	 * Calls <code>sunflower(n, 0.75)</code>.
+	 * 
 	 * @param n the number of points to return
 	 * @return an array of n 2D Vecfs with magnitude &lt;= 1
 	 */
@@ -130,8 +245,10 @@ public final class PixelMath {
 	/**
 	 * Returns n 2D Vecfs evenly distributed in a disk with radius 1.
 	 * <p>
-	 * Uses a modified <a href="https://stackoverflow.com/a/28572551">'sunflower'</a> function.
-	 * @param n the number of points to return
+	 * Uses a modified
+	 * <a href="https://stackoverflow.com/a/28572551">'sunflower'</a> function.
+	 * 
+	 * @param n     the number of points to return
 	 * @param alpha the edge uniformity. A higher alpha means a smoother edge.
 	 * @return an array of n 2D Vecfs with magnitude &lt;= 1
 	 */
@@ -149,17 +266,22 @@ public final class PixelMath {
 	}
 
 	// r - grid radius, k - sample attempts (default 20)
-	// returns an evenly-spaced anisotropic set of points in the disk r < 1 centered at the origin
+	// returns an evenly-spaced anisotropic set of points in the disk r < 1 centered
+	// at the origin
 	/**
-	 * Generates an evenly-spaced anisotropic array of points in a disk with radius 1.
+	 * Generates an evenly-spaced anisotropic array of points in a disk with radius
+	 * 1.
 	 * <p>
-	 * This is based on the <a href="http://extremelearning.com.au/an-improved-version-of-bridsons-algorithm-n-for-poisson-disc-sampling/">
-	 * "maximal poisson disk sampling"</a> algorithm. Typically, this produces very small rivers in the points
-	 * if theta is non-uniformly distributed (and maybe in general?). This is counteracted here by adding
-	 * a small random value to the radius.
+	 * This is based on the <a href=
+	 * "http://extremelearning.com.au/an-improved-version-of-bridsons-algorithm-n-for-poisson-disc-sampling/">
+	 * "maximal poisson disk sampling"</a> algorithm. Typically, this produces very
+	 * small rivers in the points if theta is non-uniformly distributed (and maybe
+	 * in general?). This is counteracted here by adding a small random value to the
+	 * radius.
+	 * 
 	 * @param r the radius of the hashing grid
 	 * @param k the number of sample attempts (recommended value is 20)
-	 * @return A set of 
+	 * @return A set of
 	 */
 	public static Vecf[] poisson(int r, int k) {
 		ArrayList<Vecf> dead = new ArrayList<Vecf>();
