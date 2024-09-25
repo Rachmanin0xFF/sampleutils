@@ -3,6 +3,7 @@
 Note: This is a WIP; I'm cobbling together this library from various functions and utility scripts I've written over the years. First release should be out soon.
 
 ![interpolation example](examples/sampleutils_interpolation/interpolation_example_output.png)
+![convolution example](examples/sampleutils_convolution/convolution_example_output.png)
 
 ## Features
 ### Supported
