@@ -24,14 +24,14 @@ void draw() {
   textAlign(CENTER, CENTER);
   textSize(15);
 
-  float[][] k = PixelMath.differenceOfGaussiansKernel(8, 3, 2.5);
+  float[][] k = PixelMath.differenceOfGaussiansKernel(4, 2, 2.5);
   k = PixelMath.multKernel(k, 10.f);
   
   image(sio.toPImage(v), 0, 0);
   text("Original", 200, 415);
   translate(400, 0);
 
-  image(sio.toPImage(Filters.upscale(new VecImage(PixelMath.multKernel(k, 10.0*k.length*k[0].length)), 400, 400)), 0, 0);
+  image(sio.toPImage(Filters.upscale(new VecImage(PixelMath.multKernel(k, 8.0*k.length*k[0].length)), 400, 400)), 0, 0);
   text("Kernel", 200, 415);
   translate(400, 0);
 

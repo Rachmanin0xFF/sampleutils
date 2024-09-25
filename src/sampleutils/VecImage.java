@@ -17,7 +17,7 @@ public class VecImage {
 	public int channels;
 	
 	public EdgeModes edgeMode = EdgeModes.CLAMP;
-	public FilterModes filterMode = FilterModes.BILINEAR;
+	public FilterModes filterMode = FilterModes.NEAREST;
 	public BCSplineModes BCSplineMode = BCSplineModes.MITCHELL_NETRAVALI;
 
 	public float BC_SPLINE_B = 0.f;
@@ -121,7 +121,7 @@ public class VecImage {
 							255);
 				else if(channels == 1)
 					output[x + y * width] = color((int) (pixels[x][y].components[0]),
-							(int) (pixels[x][y].components[0]), (int) (pixels[x][y].components[0]),
+							0*(int) (pixels[x][y].components[0]), (int) -(pixels[x][y].components[0]),
 							255);
 			}
 		return output;
