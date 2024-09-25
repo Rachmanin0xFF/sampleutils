@@ -60,4 +60,5 @@ void draw() {
   translate(200, 0);
 
   saveFrame("interpolation_example_output.png");
+  noLoop();
 }

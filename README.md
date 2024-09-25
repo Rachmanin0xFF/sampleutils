@@ -18,7 +18,7 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 #### Filters
 * Circular medioid blurring
 * Inversion
-* Kernel blurs (convolutions)
+* Kernel filters (convolutions)
 * Bivariate Gaussian blurs
 
 ### Planned:

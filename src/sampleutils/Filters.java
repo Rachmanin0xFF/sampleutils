@@ -24,8 +24,8 @@ public final class Filters {
 		
 		for(int x = 0; x < output.width; x++) {
 			for(int y = 0; y < output.height; y++) {
-				for(int i = -radiusX; i < radiusX; i++) {
-					for(int j = -radiusY; j < radiusY; j++) {
+				for(int i = -radiusX; i <= radiusX; i++) {
+					for(int j = -radiusY; j <= radiusY; j++) {
 						output.pixels[x][y].add(Vecf.mult(input.getPixel(x+i, y+j), kernel[i+radiusX][j+radiusY]));
 					}
 				}

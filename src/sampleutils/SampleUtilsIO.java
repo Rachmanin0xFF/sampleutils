@@ -5,7 +5,7 @@ import processing.core.*;
 /**
  * Instancing necessary for using VecImage with native Processing methods.
  * <p>
- * Creating & displaying PImages requires having the PApplet object. This class exists to decouple that
+ * Creating and displaying PImages requires having the PApplet object. This class exists to decouple that
  * requirement from VecImage.
  */
 public class SampleUtilsIO implements PConstants {
@@ -21,10 +21,11 @@ public class SampleUtilsIO implements PConstants {
 	/**
 	 * A wrapper for Processing's <code>loadImage</code> method.
 	 * @param path the path of the input image.
+	 * @param includeAlpha whether or not to load the alpha channel
 	 * @return the (4-component) VecImage loaded from the path.
 	 */
-	public VecImage loadImage(String path) {
-		return toVecImage(myParent.loadImage(path));
+	public VecImage loadImage(String path, boolean includeAlpha) {
+		return toVecImage(myParent.loadImage(path), includeAlpha);
 	}
 	
 	/**
@@ -43,14 +44,16 @@ public class SampleUtilsIO implements PConstants {
 	/**
 	 * Converts a PImage to a VecImage
 	 * @param p the PImage
+	 * @param includeAlpha whether or not to pass along the alpha channel
 	 * @return a (4-component) VecImage with the same data
 	 */
-	public VecImage toVecImage(PImage p) {
-		VecImage v = new VecImage(p.width, p.height, 4);
+	public VecImage toVecImage(PImage p, boolean includeAlpha) {
+		VecImage v = new VecImage(p.width, p.height, includeAlpha ? 4 : 3);
 		for (int x = 0; x < p.width; x++)
 			for (int y = 0; y < p.height; y++) {
 				int c = p.get(x, y);
-				v.pixels[x][y] = new Vecf(r(c), g(c), b(c), a(c));
+				if(includeAlpha) v.pixels[x][y] = new Vecf(r(c), g(c), b(c), a(c));
+				else v.pixels[x][y] = new Vecf(r(c), g(c), b(c));
 			}
 		return v;
 	}

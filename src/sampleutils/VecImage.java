@@ -85,6 +85,18 @@ public class VecImage {
 			}
 	}
 	
+	public VecImage(float[][] data) {
+		this.width = data.length;
+		this.height = data[0].length;
+		pixels = new Vecf[width][height];
+		this.channels = 1;
+		for(int x = 0; x < width; x++) {
+			for(int y = 0; y < height; y++) {
+				pixels[x][y] = new Vecf(data[x][y]);
+			}
+		}
+	}
+	
 	private final int color(int r, int g, int b, int alpha) {
 		return ((alpha < 0 ? 0 : (alpha > 255 ? 255 : alpha)) << 24) | ((r < 0 ? 0 : (r > 255 ? 255 : r)) << 16)
 				| ((g < 0 ? 0 : (g > 255 ? 255 : g)) << 8) | ((b < 0 ? 0 : (b > 255 ? 255 : b)));
@@ -106,6 +118,10 @@ public class VecImage {
 				else if (channels == 3)
 					output[x + y * width] = color((int) (pixels[x][y].components[0]),
 							(int) (pixels[x][y].components[1]), (int) (pixels[x][y].components[2]),
+							255);
+				else if(channels == 1)
+					output[x + y * width] = color((int) (pixels[x][y].components[0]),
+							(int) (pixels[x][y].components[0]), (int) (pixels[x][y].components[0]),
 							255);
 			}
 		return output;
