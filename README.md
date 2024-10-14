@@ -26,7 +26,7 @@ Note: This is a WIP; I'm cobbling together this library from various functions a
 #### Interpolation/Resampling
 * Box filtering
 * Gaussian fitlering
-* FFT methods
+* Faster convolutions (use frequency space)
 * CNN-based/DLSS-style upscaling (probably beyond project scope)
 #### Filters
 * Unsharp masking / local contrast enhancement
